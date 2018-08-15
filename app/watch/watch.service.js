@@ -115,14 +115,14 @@
                             metafield_key: params.key,
                             metafield_value_has: params.value,
                             limit: 100,
-                            read_key: READ_KEY
+                            read_key: "aKhORyFY2XbshlS1DRkqROgASZnc9DA38QsQzv1u8z1Zl8SRkl"
                         }
                     });
                 else
                     return $http.get(URL + BUCKET_SLUG + '/object-type/watches', {
                         params: {
                             limit: 100,
-                            read_key: READ_KEY
+                            read_key: "aKhORyFY2XbshlS1DRkqROgASZnc9DA38QsQzv1u8z1Zl8SRkl"
                         }
                     });
             };
@@ -130,14 +130,14 @@
                 return $http.get(URL + BUCKET_SLUG + '/object-type/watches', {
                     params: {
                         limit: 100,
-                        read_key: READ_KEY
+                        read_key: "aKhORyFY2XbshlS1DRkqROgASZnc9DA38QsQzv1u8z1Zl8SRkl"
                     }
                 });
             };
             this.getWatchBySlug = function (slug) {
                 return $http.get(URL + BUCKET_SLUG + '/object/' + slug, {
                     params: {
-                        read_key: READ_KEY
+                        read_key: "aKhORyFY2XbshlS1DRkqROgASZnc9DA38QsQzv1u8z1Zl8SRkl"
                     }
                 });
             };

@@ -303,9 +303,310 @@
 
     angular
         .module('main')
+        .controller('WatchCtrl', WatchCtrl);
+
+    function WatchCtrl($stateParams, WatchService, Notification, $log, MEDIA_URL, $state) {
+        var vm = this;
+
+        vm.getWatches = getWatches;
+        vm.removeWatch = removeWatch;
+
+        vm.params = $stateParams;
+
+        vm.categories = [];
+        vm.brands = [];
+        vm.case_sizes = [];
+        vm.colors = [];
+        
+        vm.watches = [];
+        
+        function getWatches() {
+            function success(response) {
+                $log.info(response);
+
+                vm.watches = response.data.objects;
+
+            }
+
+            function failed(response) {
+                $log.error(response);
+            }
+
+            function params(response) {
+                response.data.objects.forEach(function (item) {
+                    if (vm.categories.indexOf(item.metadata.category) === -1)
+                        vm.categories.push(item.metadata.category);
+                    if (vm.brands.indexOf(item.metadata.brand) === -1)
+                        vm.brands.push(item.metadata.brand);
+                    if (vm.case_sizes.indexOf(item.metadata.case_size) === -1)
+                        vm.case_sizes.push(item.metadata.case_size);
+                    if (vm.colors.indexOf(item.metadata.color) === -1)
+                        vm.colors.push(item.metadata.color)
+                });
+            }
+
+            WatchService
+                .getWatches($stateParams)
+                .then(success, failed);
+
+            WatchService
+                .getWatchesParams()
+                .then(params);
+        }
+
+        function removeWatch(slug) {
+            function success(response) {
+                $log.info(response);
+                getWatches();
+                Notification.success('Removed!');
+            }
+
+            function failed(response) {
+                $log.error(response);
+            }
+            
+            WatchService
+                .removeWatch(slug)
+                .then(success, failed);
+
+        }
+
+    }
+})();
+
+(function () {
+    'use strict';
+    
+    angular
+        .module('watch', [
+            'watch.profile'
+        ])
+        .config(config);
+
+    config.$inject = ['$stateProvider', '$urlRouterProvider'];
+    function config($stateProvider, $urlRouterProvider) {
+ 
+        $stateProvider
+            .state('main.watch', {
+                url: '?key&value',
+                templateUrl: '../views/watch/watch.list.html',
+                controller: 'WatchCtrl as vm'
+            });
+    }
+})();
+ 
+(function () {
+    'use strict';
+
+    angular
+        .module('main')
+        .service('WatchService', function ($http,
+                                          $cookieStore, 
+                                          $q, 
+                                          $rootScope,
+                                          URL, BUCKET_SLUG, READ_KEY, WRITE_KEY, MEDIA_URL) {
+            
+            $http.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+            this.watch = {
+                title: null,
+                type_slug: 'watches',
+                content: null,
+                metafields: [
+                    {
+                        key: "category",
+                        title: "Category",
+                        type: "text",
+                        value: null
+                    },
+                    {
+                        key: "brand",
+                        title: "Brand",
+                        type: "text",
+                        value: null
+                    },
+                    {
+                        key: "case_size",
+                        title: "Case Size",
+                        type: "text",
+                        value: null
+                    },
+                    {
+                        key: "case_thickness",
+                        title: "Case Thickness",
+                        type: "text",
+                        value: null
+                    },
+                    {
+                        key: "strap_width",
+                        title: "Strap Width",
+                        type: "text",
+                        value: null
+                    },
+                    {
+                        key: "movement",
+                        title: "Movement",
+                        type: "text",
+                        value: null
+                    },
+                    {
+                        key: "glass",
+                        title: "Glass",
+                        type: "text",
+                        value: null
+                    },
+                    {
+                        key: "water_resistance",
+                        title: "Water Resistance",
+                        type: "text",
+                        value: null
+                    },
+                    {
+                        key: "color",
+                        title: "Color",
+                        type: "text",
+                        value: null
+                    },
+                    {
+                        key: "strap_material",
+                        title: "Strap Material",
+                        type: "text",
+                        value: null
+                    },
+                    {
+                        key: "price",
+                        title: "Price",
+                        type: "text",
+                        value: null
+                    },
+                    {
+                        key: "images",
+                        title: "Images",
+                        type: "parent",
+                        value: "",
+                        children: [
+                            {
+                                key: "image_1",
+                                title: "Image_1",
+                                type: "file"
+                            },
+                            {
+                                key: "image_2",
+                                title: "Image_2",
+                                type: "file"
+                            },
+                            {
+                                key: "image_3",
+                                title: "Image_3",
+                                type: "file"
+                            }
+                        ]
+                    }
+                ]
+            };
+
+            this.getWatches = function (params) {
+                if (!angular.equals({}, params))
+                    return $http.get(URL + BUCKET_SLUG + '/object-type/watches/search', {
+                        params: {
+                            metafield_key: params.key,
+                            metafield_value_has: params.value,
+                            limit: 100,
+                            read_key: "aKhORyFY2XbshlS1DRkqROgASZnc9DA38QsQzv1u8z1Zl8SRkl"
+                        }
+                    });
+                else
+                    return $http.get(URL + BUCKET_SLUG + '/object-type/watches', {
+                        params: {
+                            limit: 100,
+                            read_key: "aKhORyFY2XbshlS1DRkqROgASZnc9DA38QsQzv1u8z1Zl8SRkl"
+                        }
+                    });
+            };
+            this.getWatchesParams = function () {
+                return $http.get(URL + BUCKET_SLUG + '/object-type/watches', {
+                    params: {
+                        limit: 100,
+                        read_key: "aKhORyFY2XbshlS1DRkqROgASZnc9DA38QsQzv1u8z1Zl8SRkl"
+                    }
+                });
+            };
+            this.getWatchBySlug = function (slug) {
+                return $http.get(URL + BUCKET_SLUG + '/object/' + slug, {
+                    params: {
+                        read_key: "aKhORyFY2XbshlS1DRkqROgASZnc9DA38QsQzv1u8z1Zl8SRkl"
+                    }
+                });
+            };
+            this.updateWatch = function (event) {
+                event.write_key = WRITE_KEY;
+
+                return $http.put(URL + BUCKET_SLUG + '/edit-object', event);
+            };
+            this.removeWatch = function (slug) {
+                return $http.delete(URL + BUCKET_SLUG + '/' + slug, {
+                    ignoreLoadingBar: true,
+                    headers:{
+                        'Content-Type': 'application/json'
+                    },
+                    data: {
+                        write_key: WRITE_KEY
+                    }
+                });
+            };
+            this.createWatch = function (watch) {
+                watch.write_key = WRITE_KEY;
+                
+                return $http.post(URL + BUCKET_SLUG + '/add-object', watch);
+            };
+            this.upload = function (file) {
+                var fd = new FormData();
+
+                fd.append('media', file);
+                fd.append('write_key', WRITE_KEY);
+
+                var defer = $q.defer();
+
+                var xhttp = new XMLHttpRequest();
+
+                xhttp.upload.addEventListener("progress",function (e) {
+                    defer.notify(parseInt(e.loaded * 100 / e.total));
+                });
+                xhttp.upload.addEventListener("error",function (e) {
+                    defer.reject(e);
+                });
+
+                xhttp.onreadystatechange = function() {
+                    if (xhttp.readyState === 4) {
+                        defer.resolve(JSON.parse(xhttp.response)); //Outputs a DOMString by default
+                    }
+                };
+
+                xhttp.open("post", MEDIA_URL, true);
+
+                xhttp.send(fd);
+                
+                return defer.promise;
+            }
+        });
+})();  
+
+angular.module("config", [])
+.constant("BUCKET_SLUG", "b565ae10-a014-11e8-baa7-297ee0900870")
+.constant("MEDIA_URL", "https://api.cosmicjs.com/v1/b565ae10-a014-11e8-baa7-297ee0900870/media")
+.constant("URL", "https://api.cosmicjs.com/v1/")
+.constant("READ_KEY", "")
+.constant("WRITE_KEY", "")
+.constant("STRIPE_KEY", "");
+
+(function () {
+    'use strict'; 
+
+    angular
+        .module('main')
         .controller('CartCtrl', CartCtrl);
 
-    function CartCtrl(CartService, WatchService, $cookies, Notification, STRIPE_KEY, $log, $state, StripeCheckout) {
+    function CartCtrl(CartService, WatchService, $cookies, $http, Notification, STRIPE_KEY, $log, $state, StripeCheckout) {
         var vm = this;
 
         vm.addToCart = addToCart;
@@ -338,11 +639,17 @@
                 handler.open({
                     name: 'Ecommerce App',
                     description: vm.watches.length + ' watches',
-                    zipCode: true,
                     amount: vm.totalPrice * 100
                 }).then(function(result) {
                     console.log("Order complete!");
-                    completeOrder(order);
+                    $http.post('/charge', {
+                        stripeToken: result[0].id,
+                        description: vm.watches.length + ' watches',
+                        amount: vm.totalPrice * 100,
+                        order: order
+                    }).then(function () {
+                        completeOrder(order);
+                    });
                 },function() {
                     console.log("Stripe Checkout closed without making a sale :(");
                 });
@@ -610,14 +917,6 @@
             };
         });  
 })();  
-angular.module("config", [])
-.constant("BUCKET_SLUG", "ecommerce-app")
-.constant("MEDIA_URL", "https://api.cosmicjs.com/v1/ecommerce-app/media")
-.constant("URL", "https://api.cosmicjs.com/v1/")
-.constant("READ_KEY", "")
-.constant("WRITE_KEY", "")
-.constant("STRIPE_KEY", "pk_test_oRv6WcnATRyMqponKKG6QlON");
-
 (function () {
     'use strict';
 
@@ -655,298 +954,6 @@ angular.module("config", [])
             };
 
         });  
-})();  
-(function () {
-    'use strict'; 
-
-    angular
-        .module('main')
-        .controller('WatchCtrl', WatchCtrl);
-
-    function WatchCtrl($stateParams, WatchService, Notification, $log, MEDIA_URL, $state) {
-        var vm = this;
-
-        vm.getWatches = getWatches;
-        vm.removeWatch = removeWatch;
-
-        vm.params = $stateParams;
-
-        vm.categories = [];
-        vm.brands = [];
-        vm.case_sizes = [];
-        vm.colors = [];
-        
-        vm.watches = [];
-        
-        function getWatches() {
-            function success(response) {
-                $log.info(response);
-
-                vm.watches = response.data.objects;
-
-            }
-
-            function failed(response) {
-                $log.error(response);
-            }
-
-            function params(response) {
-                response.data.objects.forEach(function (item) {
-                    if (vm.categories.indexOf(item.metadata.category) === -1)
-                        vm.categories.push(item.metadata.category);
-                    if (vm.brands.indexOf(item.metadata.brand) === -1)
-                        vm.brands.push(item.metadata.brand);
-                    if (vm.case_sizes.indexOf(item.metadata.case_size) === -1)
-                        vm.case_sizes.push(item.metadata.case_size);
-                    if (vm.colors.indexOf(item.metadata.color) === -1)
-                        vm.colors.push(item.metadata.color)
-                });
-            }
-
-            WatchService
-                .getWatches($stateParams)
-                .then(success, failed);
-
-            WatchService
-                .getWatchesParams()
-                .then(params);
-        }
-
-        function removeWatch(slug) {
-            function success(response) {
-                $log.info(response);
-                getWatches();
-                Notification.success('Removed!');
-            }
-
-            function failed(response) {
-                $log.error(response);
-            }
-            
-            WatchService
-                .removeWatch(slug)
-                .then(success, failed);
-
-        }
-
-    }
-})();
-
-(function () {
-    'use strict';
-    
-    angular
-        .module('watch', [
-            'watch.profile'
-        ])
-        .config(config);
-
-    config.$inject = ['$stateProvider', '$urlRouterProvider'];
-    function config($stateProvider, $urlRouterProvider) {
- 
-        $stateProvider
-            .state('main.watch', {
-                url: '?key&value',
-                templateUrl: '../views/watch/watch.list.html',
-                controller: 'WatchCtrl as vm'
-            });
-    }
-})();
- 
-(function () {
-    'use strict';
-
-    angular
-        .module('main')
-        .service('WatchService', function ($http,
-                                          $cookieStore, 
-                                          $q, 
-                                          $rootScope,
-                                          URL, BUCKET_SLUG, READ_KEY, WRITE_KEY, MEDIA_URL) {
-            
-            $http.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-
-            this.watch = {
-                title: null,
-                type_slug: 'watches',
-                content: null,
-                metafields: [
-                    {
-                        key: "category",
-                        title: "Category",
-                        type: "text",
-                        value: null
-                    },
-                    {
-                        key: "brand",
-                        title: "Brand",
-                        type: "text",
-                        value: null
-                    },
-                    {
-                        key: "case_size",
-                        title: "Case Size",
-                        type: "text",
-                        value: null
-                    },
-                    {
-                        key: "case_thickness",
-                        title: "Case Thickness",
-                        type: "text",
-                        value: null
-                    },
-                    {
-                        key: "strap_width",
-                        title: "Strap Width",
-                        type: "text",
-                        value: null
-                    },
-                    {
-                        key: "movement",
-                        title: "Movement",
-                        type: "text",
-                        value: null
-                    },
-                    {
-                        key: "glass",
-                        title: "Glass",
-                        type: "text",
-                        value: null
-                    },
-                    {
-                        key: "water_resistance",
-                        title: "Water Resistance",
-                        type: "text",
-                        value: null
-                    },
-                    {
-                        key: "color",
-                        title: "Color",
-                        type: "text",
-                        value: null
-                    },
-                    {
-                        key: "strap_material",
-                        title: "Strap Material",
-                        type: "text",
-                        value: null
-                    },
-                    {
-                        key: "price",
-                        title: "Price",
-                        type: "text",
-                        value: null
-                    },
-                    {
-                        key: "images",
-                        title: "Images",
-                        type: "parent",
-                        value: "",
-                        children: [
-                            {
-                                key: "image_1",
-                                title: "Image_1",
-                                type: "file"
-                            },
-                            {
-                                key: "image_2",
-                                title: "Image_2",
-                                type: "file"
-                            },
-                            {
-                                key: "image_3",
-                                title: "Image_3",
-                                type: "file"
-                            }
-                        ]
-                    }
-                ]
-            };
-
-            this.getWatches = function (params) {
-                if (!angular.equals({}, params))
-                    return $http.get(URL + BUCKET_SLUG + '/object-type/watches/search', {
-                        params: {
-                            metafield_key: params.key,
-                            metafield_value_has: params.value,
-                            limit: 100,
-                            read_key: READ_KEY
-                        }
-                    });
-                else
-                    return $http.get(URL + BUCKET_SLUG + '/object-type/watches', {
-                        params: {
-                            limit: 100,
-                            read_key: READ_KEY
-                        }
-                    });
-            };
-            this.getWatchesParams = function () {
-                return $http.get(URL + BUCKET_SLUG + '/object-type/watches', {
-                    params: {
-                        limit: 100,
-                        read_key: READ_KEY
-                    }
-                });
-            };
-            this.getWatchBySlug = function (slug) {
-                return $http.get(URL + BUCKET_SLUG + '/object/' + slug, {
-                    params: {
-                        read_key: READ_KEY
-                    }
-                });
-            };
-            this.updateWatch = function (event) {
-                event.write_key = WRITE_KEY;
-
-                return $http.put(URL + BUCKET_SLUG + '/edit-object', event);
-            };
-            this.removeWatch = function (slug) {
-                return $http.delete(URL + BUCKET_SLUG + '/' + slug, {
-                    ignoreLoadingBar: true,
-                    headers:{
-                        'Content-Type': 'application/json'
-                    },
-                    data: {
-                        write_key: WRITE_KEY
-                    }
-                });
-            };
-            this.createWatch = function (watch) {
-                watch.write_key = WRITE_KEY;
-                
-                return $http.post(URL + BUCKET_SLUG + '/add-object', watch);
-            };
-            this.upload = function (file) {
-                var fd = new FormData();
-
-                fd.append('media', file);
-                fd.append('write_key', WRITE_KEY);
-
-                var defer = $q.defer();
-
-                var xhttp = new XMLHttpRequest();
-
-                xhttp.upload.addEventListener("progress",function (e) {
-                    defer.notify(parseInt(e.loaded * 100 / e.total));
-                });
-                xhttp.upload.addEventListener("error",function (e) {
-                    defer.reject(e);
-                });
-
-                xhttp.onreadystatechange = function() {
-                    if (xhttp.readyState === 4) {
-                        defer.resolve(JSON.parse(xhttp.response)); //Outputs a DOMString by default
-                    }
-                };
-
-                xhttp.open("post", MEDIA_URL, true);
-
-                xhttp.send(fd);
-                
-                return defer.promise;
-            }
-        });
 })();  
 (function () {
     'use strict'; 
@@ -1155,36 +1162,6 @@ angular.module("config", [])
 })();
  
 (function () {
-    'use strict';
-    
-    angular
-        .module('cart.checkout', [])
-        .config(config); 
-
-    config.$inject = ['$stateProvider', 'StripeCheckoutProvider'];
-    function config($stateProvider, StripeCheckoutProvider) {
- 
-        $stateProvider
-            .state('main.cart.checkout', {
-                url: '/checkout',
-                views: {
-                    '@main': {
-                        templateUrl: '../views/cart/cart.checkout.html'
-                    }
-                }
-            })
-            .state('main.cart.thankYou', {
-                url: '/thank-you',
-                views: {
-                    '@main': {
-                        templateUrl: '../views/cart/cart.thank-you.html'
-                    }
-                }
-            });
-    }
-})();
- 
-(function () {
     'use strict'; 
 
     angular
@@ -1236,6 +1213,36 @@ angular.module("config", [])
             });
     }
     
+})();
+ 
+(function () {
+    'use strict';
+    
+    angular
+        .module('cart.checkout', [])
+        .config(config); 
+
+    config.$inject = ['$stateProvider', 'StripeCheckoutProvider'];
+    function config($stateProvider, StripeCheckoutProvider) {
+ 
+        $stateProvider
+            .state('main.cart.checkout', {
+                url: '/checkout',
+                views: {
+                    '@main': {
+                        templateUrl: '../views/cart/cart.checkout.html'
+                    }
+                }
+            })
+            .state('main.cart.thankYou', {
+                url: '/thank-you',
+                views: {
+                    '@main': {
+                        templateUrl: '../views/cart/cart.thank-you.html'
+                    }
+                }
+            });
+    }
 })();
  
 (function () {
