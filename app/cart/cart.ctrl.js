@@ -36,14 +36,14 @@
         function stripeCheckout(order) {
             if (vm.orderForm.$valid) {
                 handler.open({
-                    name: 'Ecommerce App',
-                    description: vm.watches.length + ' watches',
+                    name: 'Raw Sugar Sunday',
+                    description: vm.watches.length + ' Items',
                     amount: vm.totalPrice * 100
                 }).then(function(result) {
                     console.log("Order complete!");
                     $http.post('/charge', {
                         stripeToken: result[0].id,
-                        description: vm.watches.length + ' watches',
+                        description: vm.watches.length + ' Items',
                         amount: vm.totalPrice * 100,
                         order: order
                     }).then(function () {
